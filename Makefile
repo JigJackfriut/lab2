@@ -24,12 +24,12 @@ restChat: restChat.o ChatDB.o ChatEntry.o
 all: PutHTML restChat
 
 PutHTML:
-	cp restChat.html /var/www/html/restChat/
-	cp restChat.css /var/www/html/restChat/
-	cp restChat.js /var/www/html/restChat/
+	cp lab2.html /var/www/html/lab2/
+	cp lab2.css /var/www/html/lab2/
+	cp lab2.js /var/www/html/lab2/
 	
 	echo "Current contents of your HTML directory: "
-	ls -l /var/www/html/restChat/
+	ls -l /var/www/html/lab2/
 
 restChat : restChat.cpp httplib.h
 	$(CXX) -o restChat $(CXXFLAGS) restChat.cpp $(OPENSSL_SUPPORT) $(ZLIB_SUPPORT) $(BROTLI_SUPPORT) 
