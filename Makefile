@@ -3,36 +3,39 @@
 # sudo mkdir /var/www/html/restChat
 # sudo chown ubuntu /var/www/html/restChat																				
 
-CC=g++
-CFLAGS= -std=c++14 -Wno-deprecated-declarations
-RM= /bin/rm -
+# Makefile for Flask web application
 
-ChatEntry.o: ChatEntry.cpp ChatEntry.h
-	$(CC) -c $(CFLAGS) ChatEntry.cpp
+# Variables
+PYTHON=python3
+PIP=pip3
+HTML_DIR=/var/www/html/lab2/
+CSS_DIR=/var/www/html/lab2/
+JS_DIR=/var/www/html/lab2/
 
-ChatDB.o: ChatDB.cpp ChatDB.h
-	$(CC) -c $(CFLAGS) -I/usr/include/cppconn ChatDB.cpp
+# Targets
+install:
+	$(PIP) install -r requirements.txt
 
+run:
+	$(PYTHON) app.py
 
+lint:
+	pylint app.py
 
-restChat.o: restChat.cpp httplib.h
-	$(CC) -c $(CFLAGS) restChat.cpp 
+clean:
+	$(RM) __pycache__/
+	$(RM) */__pycache__/
+	$(RM) *.pyc
+	$(RM) */*.pyc
 
-restChat: restChat.o ChatDB.o ChatEntry.o 
-	$(CC) restChat.o ChatDB.o ChatEntry.o -o restChat -L/usr/local/lib -lmariadbcpp
+deploy:
+	cp lab2.html $(HTML_DIR)
+	cp lab2.css $(CSS_DIR)
+	cp lab2.js $(JS_DIR)
 
-all: PutHTML restChat
+# Phony targets
+.PHONY: install run lint clean deploy
 
-PutHTML:
-	cp lab2.html /var/www/html/lab2/
-	cp lab2.css /var/www/html/lab2/
-	cp lab2.js /var/www/html/lab2/
-	
-	echo "Current contents of your HTML directory: "
-	ls -l /var/www/html/lab2/
-
-restChat : restChat.cpp httplib.h
-	$(CXX) -o restChat $(CXXFLAGS) restChat.cpp $(OPENSSL_SUPPORT) $(ZLIB_SUPPORT) $(BROTLI_SUPPORT) 
 
 clean:
 	rm restChat *.o
