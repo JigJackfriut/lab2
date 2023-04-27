@@ -1,148 +1,111 @@
-// Rest based chat client
-// Jim Skon 2022
-// Kenyon College
+$(document).ready(function() {
+    // Register Form Submit
+    $('#register-form').submit(function(event) {
+        // Prevent default form submission
+        event.preventDefault();
 
-var baseUrl = 'http://3.134.78.249:5005';
-var state="off";
-var myname="";
-var inthandle;
+        // Get form data
+        var username = $('#register-username').val();
+        var email = $('#register-email').val();
+        var password = $('#register-password').val();
 
-/* Start with text input and status hidden */
-document.getElementById('chatinput').style.display = 'none';
-document.getElementById('status').style.display = 'none';
-document.getElementById('leave').style.display = 'none';
-// Action if they push the join button
-document.getElementById('login-btn').addEventListener("click", (e) => {
-	join();
-})
+        // Send AJAX request to register user
+        $.ajax({
+            url: '/chat/register/' + username + '/' + email + '/' + password,
+            type: 'POST',
+            success: function(response) {
+                if (response.status == 'success') {
+                    alert('Registration successful!');
+                } else {
+                    alert('Registration failed: ' + response.error);
+                }
+            },
+            error: function() {
+                alert('Registration failed. Please try again later.');
+            }
+        });
+    });
 
-/* Set up buttons */
-document.getElementById('leave-btn').addEventListener("click", leaveSession);
-document.getElementById('send-btn').addEventListener("click", sendText);
+    // Login Form Submit
+    $('#login-form').submit(function(event) {
+        // Prevent default form submission
+        event.preventDefault();
 
-// Watch for enter on message box
-document.getElementById('message').addEventListener("keydown", (e)=> {
-    if (e.code == "Enter") {
-	sendText();
-    }   
+        // Get form data
+        var username = $('#login-username').val();
+        var password = $('#login-password').val();
+
+        // Send AJAX request to login user
+        $.ajax({
+            url: '/chat/login/' + username + '/' + password,
+            type: 'POST',
+            success: function(response) {
+                if (response.status == 'success') {
+                    alert('Login successful!');
+                } else {
+                    alert('Login failed: ' + response.error);
+                }
+            },
+            error: function()
+            alert('Login failed. Please try again later.');
+        }
+    });
 });
 
+// Chat Form Submit
+$('#chat-form').submit(function(event) {
+    // Prevent default form submission
+    event.preventDefault();
 
-// Call function on page exit
-window.onbeforeunload = leaveSession;
+    // Get form data
+    var message = $('#chat-message').val();
 
+    // Send AJAX request to send chat message
+    $.ajax({
+        url: '/chat/send/' + message,
+        type: 'POST',
+        success: function(response) {
+            if (response.status == 'success') {
+                // Clear chat message input field
+                $('#chat-message').val('');
+            } else {
+                alert('Chat message failed to send.');
+            }
+        },
+        error: function() {
+            alert('Chat message failed to send. Please try again later.');
+        }
+    });
+});
 
-function completeJoin(results) {
-	var status = results['status'];
-	if (status != "success") {
-		alert("Username already exists!");
-		leaveSession();
-		return;
-	}
-	var user = results['user'];
-	console.log("Join:"+user);
-	startSession(user);
-}
+// Update Chat Messages and Current Users
+setInterval(function() {
+    // Send AJAX request to get chat messages and current users
+    $.ajax({
+        url: '/chat/update',
+        type: 'GET',
+        success: function(response) {
+            if (response.status == 'success') {
+                // Update chat messages
+                var messagesHtml = '';
+                for (var i = 0; i < response.messages.length; i++) {
+                    var message = response.messages[i];
+                    messagesHtml += '<p><strong>' + message.username + ':</strong> ' + message.message + '</p>';
+                }
+                $('#chat-messages').html(messagesHtml);
 
-function join() {
-	myname = document.getElementById('yourname').value;
-	fetch(baseUrl+'/chat/join/'+myname, {
-        method: 'get'
-    })
-    .then (response => response.json() )
-    .then (data =>completeJoin(data))
-    .catch(error => {
-        {alert("Error: Something went wrong:"+error);}
-    })
-}
-
-function completeSend(results) {
-	var status = results['status'];
-	if (status == "success") {
-		console.log("Send succeeded")
-	} else {
-		alert("Error sending message!");
-	}
-}
-
-//function called on submit or enter on text input
-function sendText() {
-    var message = document.getElementById('message').value;
-    console.log("Send: "+myname+":"+message);
-	fetch(baseUrl+'/chat/send/'+myname+'/'+message, {
-        method: 'get'
-    })
-    .then (response => response.json() )
-    .then (data =>completeSend(data))
-    .catch(error => {
-        {alert("Error: Something went wrong:"+error);}
-    })    
-
-}
-
-function completeFetch(result) {
-	messages = result["messages"];
-	messages.forEach(function (m,i) {
-		name = m['user'];
-		message = m['message'];
-		document.getElementById('chatBox').innerHTML +=
-	    	"<font color='red'>" + name + ": </font>" + message + "<br />";
-	});
-}
-
-/* Check for new messaged */
-function fetchMessage() {
-	fetch(baseUrl+'/chat/fetch/'+myname, {
-        method: 'get'
-    })
-    .then (response => response.json() )
-    .then (data =>completeFetch(data))
-    .catch(error => {
-        {console.log("Server appears down");}
-    })  	
-}
-/* Functions to set up visibility of sections of the display */
-function startSession(name){
-    state="on";
-    
-    document.getElementById('yourname').value = "";
-    document.getElementById('register').style.display = 'none';
-    document.getElementById('user').innerHTML = "User: " + name;
-    document.getElementById('chatinput').style.display = 'block';
-    document.getElementById('status').style.display = 'block';
-    document.getElementById('leave').style.display = 'block';
-    /* Check for messages every 500 ms */
-    inthandle=setInterval(fetchMessage,500);
-}
-
-function leaveSession(){
-    state="off";
-    
-    document.getElementById('yourname').value = "";
-    document.getElementById('register').style.display = 'block';
-    document.getElementById('user').innerHTML = "";
-    document.getElementById('chatinput').style.display = 'none';
-    document.getElementById('status').style.display = 'none';
-    document.getElementById('leave').style.display = 'none';
-	clearInterval(inthandle);
-}
-
-
-$(function() {
-
-    $('#login-form-link').click(function(e) {
-		$("#login-form").delay(100).fadeIn(100);
- 		$("#register-form").fadeOut(100);
-		$('#register-form-link').removeClass('active');
-		$(this).addClass('active');
-		e.preventDefault();
-	});
-	$('#register-form-link').click(function(e) {
-		$("#register-form").delay(100).fadeIn(100);
- 		$("#login-form").fadeOut(100);
-		$('#login-form-link').removeClass('active');
-		$(this).addClass('active');
-		e.preventDefault();
-	});
-
+                // Update current users
+                var usersHtml = '';
+                for (var i = 0; i < response.users.length; i++) {
+                    var user = response.users[i];
+                    usersHtml += '<p>' + user.username + '</p>';
+                }
+                $('#current-users').html(usersHtml);
+            }
+        },
+        error: function() {
+            alert('Failed to update chat messages and current users.');
+        }
+    });
+}, 1000);
 });
