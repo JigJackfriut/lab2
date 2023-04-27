@@ -1,6 +1,4 @@
 
-Python (chat_microservice.py):
-```python
 from flask import Flask, jsonify, request
 import random
 
@@ -51,13 +49,12 @@ def send(message):
 
 @app.route('/chat/update', methods=['GET'])
 def update():
-   # Get current list of chat messages and current users
-  current_messages = messages[-10:] # Get last 10 messages
-  current_users = users
+    # Get current list of chat messages and current users
+    current_messages = messages[-10:] # Get last 10 messages
+    current_users = users
 
-# Return JSON response
-  return jsonify({'status': 'success', 'messages': current_messages, 'users': current_users})
+    # Return JSON response
+    return jsonify({'status': 'success', 'messages': current_messages, 'users': current_users})
 
-if name == 'main':
-app.run(debug=True)
-
+if __name__ == '__main__':
+    app.run(debug=True)
