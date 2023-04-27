@@ -57,4 +57,4 @@ def update():
     return jsonify({'status': 'success', 'messages': current_messages, 'users': current_users})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='54.198.38.17', port=5000)
