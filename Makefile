@@ -29,9 +29,9 @@ clean:
 	$(RM) */*.pyc
 
 deploy:
-	cp lab2.html $(HTML_DIR)
-	cp lab2.css $(CSS_DIR)
-	cp lab2.js $(JS_DIR)
+	cp restChat.html $(HTML_DIR)
+	cp restChat.css $(CSS_DIR)
+	cp restChat.js $(JS_DIR)
 
 # Phony targets
 .PHONY: install run lint clean deploy
