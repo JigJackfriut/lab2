@@ -17,6 +17,30 @@ using namespace std;
 
 const int port = 5005;
 
+void addMessage(string username, string message, map<string,vector<string>> &messageMap) {
+	/* iterate through users adding message to each */
+	string jsonMessage = "{\"user\":\""+username+"\",\"message\":\""+message+"\"}";
+	for (auto userMessagePair : messageMap) {
+		username = userMessagePair.first;
+		messageMap[username].push_back(jsonMessage);
+	}
+}
+
+string getMessagesJSON(string username, map<string,vector<string>> &messageMap) {
+	/* retrieve json list of messages for this user */
+	bool first = true;
+	string result = "{\"messages\":[";
+	for (string message :  messageMap[username]) {
+		if (not first) result += ",";
+		result += message;
+		first = false;
+	}
+	result += "]}";
+	messageMap[username].clear();
+	return result;
+}
+
+
 
 //Grab List of Usernames
 string getUserList(map<string, string> const &activeUsers){
@@ -41,27 +65,6 @@ string getUserListMod(map<string, string> const &activeUsers){
 	return jsonMessage;
 }
 
-//Update users status if they are away or online -Sammy
-//void updateStatus(map<string, string> const &holdList, map<string, string> const &activeUsers) {
-//	vector<string> userList;
-//	string nameHold;
-//    for (auto const &pair: activeUsers) {
-        // Check if user is currently active
-//		nameHold = pair.first;
-//        if (5 == 5) {
-            // User is active, so set status to "Online"
- //           std::cout << nameHold << " is online." << std::endl;
-//			userList.push_back(nameHold);
-            // Change user's status to "Online" (or update existing status)
-            // ...
- //       } else {
-            // User is active, so set status to "Active"
-//            std::cout << nameHold << " is away." << std::endl;
-            // Change user's status to "Away" (or update existing status)
-            // ...
- //       }
-//    }
-//}
 
 //Remove someone from the active users list
 void removeUser(map<string, string> &activeUsers , string username){
@@ -69,44 +72,9 @@ void removeUser(map<string, string> &activeUsers , string username){
 }
 
 
-//Add a message to a user.
-void addMessage(string username, string message, map<string,vector<string>> &messageMap) {
-	/* iterate through users adding message to each */
-	string jsonMessage = "{\"user\":\""+username+"\",\"message\":\""+message+"\"}";
-	for (auto userMessagePair : messageMap) {
-		username = userMessagePair.first;
-		messageMap[username].push_back(jsonMessage);
-	}
-}
 
-//Check if someone is typing and then show that they are.
-void showTyping(string currentUser , map<string,vector<string>> &messageMap , map<string, string> const &typingMap , map<string,string> const &isTypingMap){
-	cout << "Show Typing is Running" << currentUser << endl;
-	if(typingMap.count(currentUser)){
-		string message = "...";
-		addMessage(currentUser , message , messageMap);
-	}
-}
 
-//Show ... in the chat for people typing.
-void getTypersList(map<string, string> const &typingMap , map<string,vector<string>> &messageMap , map<string,string> const &isTypingMap){
-	string currentUser;
-    for (auto const &pair: typingMap) {
-		currentUser = pair.first;
-		showTyping(currentUser , messageMap , typingMap , isTypingMap);
-    }
-}
-//Return list of people typing
-string getTypersListMod(map<string, string> const &typingMap){
-	string typerList;
-    for (auto const &pair: typingMap) {
-		typerList += pair.first;
-		typerList += ",";
-    }
-	typerList.erase(typerList.length() - 1);
-	string jsonMessage = "{\"typerList\":\""+typerList+"\"}";
-	return jsonMessage;
-}
+
 
 
 
