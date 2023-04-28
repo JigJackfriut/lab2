@@ -123,3 +123,190 @@ function leaveSession(){
 	clearInterval(inthandle);
 }
 
+
+function getUsers() {
+	fetch(baseUrl+'/chat/userlist', {
+        method: 'get'
+    })
+    .then (response => response.json() )
+    .then (data =>updateUsers(data))
+    .catch(error => {
+        {alert("Error: Something went wrong:"+error);}
+    })
+}
+function updateUsers(result) {
+	userList = result["userList"];
+	//console.log("user list printed");
+	document.getElementById('userlist').innerHTML = userList;
+}
+
+//functions to register a user , /chat/register/username/email/password
+document.getElementById('submitButton').addEventListener("click", registerUser);
+function registerUser(){
+	console.log("registerUser() running");
+	username = document.getElementById('user-name').value;
+	email = document.getElementById('user-email').value;
+	pass = document.getElementById('user-password').value;
+	fetch(baseUrl+'/chat/register/'+username +'/'+email+'/'+pass, {
+        method: 'get'
+    })
+    .then (response => response.json() )
+    .then (data =>completeRegisterUser(data))
+    .catch(error => {
+        {alert("Error: Something went wrong:"+error);}
+    })
+}
+
+function completeRegisterUser(results){
+	var status = results['status'];
+	console.log(status)
+	if (status != "success") {
+		alert("Username or Email already exists! Password must be more than 6 characters");
+		leaveSession();
+		return;
+	}
+	var user = results['user'];
+	alert("Registration Successful");
+	console.log("Registered:"+user);
+	username = document.getElementById('user-name').value = '';
+	email = document.getElementById('user-email').value = '';
+	pass = document.getElementById('user-password').value = '';
+}
+
+//Function to remove a user after they leave the site.
+function removeUser(){
+		fetch(baseUrl+'/chat/userlist/remove/'+nameHold, {
+        method: 'get'
+    })
+}	
+
+let gateway = 0;
+//Functions to update the server as to whether someone is typing
+function checkTyping(){
+	var message = document.getElementById('message').value;
+	//console.log(message);
+		if(message != ""){
+		updateTyping();
+	} else{
+		removeTyping();
+	}
+}
+
+function updateUsersSam(data){
+	//console.log(data);
+	fetchTypers();
+	const users = data['userList'];
+	//Returning list like Grant,Sammy,Joe,etc. and then turning it into a javascript array.
+	//https://dev.to/sanchithasr/6-ways-to-convert-a-string-to-an-array-in-javascript-1cjg
+	//https://www.educative.io/answers/how-to-add-an-id-to-element-in-javascript
+	const usersArray = users.split(',');
+	console.log(users);
+	console.log(typerArray);
+	//console.log(usersArray);
+    // Get the user list container element
+    const userBar = document.getElementById('bottomPageList');
+    // Clear any existing user list items
+    userBar.innerHTML = '';
+	let numGate = 0;
+	let listNum = "a";
+    // Create a new list item for each user and append it to the user list, first user added will have blue background
+    usersArray.forEach((user) => {
+		if(typerArray == null){
+			if(numGate == 0){
+				const listItem = document.createElement('li');
+				//Set the Class of the list , then after set the ID and Text
+				listItem.classList.add('list-group-item');
+				listItem.classList.add('active');
+				listItem.setAttribute('id' , listNum);
+				listItem.textContent = user;
+				userBar.appendChild(listItem);
+				const spanItem = document.createElement('span');
+				//Set the Class of the Span in the list , then after set the Text
+				spanItem.classList.add('badge');
+				spanItem.classList.add('rounded-pill');
+				spanItem.classList.add('bg-success');
+				spanItem.textContent = "Online";
+				listItem.appendChild(spanItem);
+				numGate += 1;
+				listNum += "a";
+			}else{
+				const listItem = document.createElement('li');
+				listItem.classList.add('list-group-item');
+				listItem.setAttribute('id' , listNum);
+				listItem.textContent = user;
+				userBar.appendChild(listItem);
+				const spanItem = document.createElement('span');
+				spanItem.classList.add('badge');
+				spanItem.classList.add('rounded-pill');
+				spanItem.classList.add('bg-success');
+				spanItem.textContent = "Online";
+				listItem.appendChild(spanItem);
+				listNum += "a";
+			}
+		}else{
+			if(numGate == 0 && typerArray.includes(user) == true){
+				let userStatus = "Is typing...";
+				UpdateUsersSamTyping(user , listNum , userBar , userStatus);
+				numGate += 1;
+				listNum += "a";
+		}else{
+			if(numGate == 0 && typerArray.includes(user) == false){
+				let userStatus = "Online";
+				UpdateUsersSamTyping(user , listNum , userBar , userStatus);
+				numGate += 1;
+				listNum += "a";
+		}else{
+			if(numGate == 0 && typerArray.includes(user) == false){
+				let userStatus = "Is typing...";
+				UpdateUsersSamTyping(user , listNum , userBar , userStatus);
+				numGate += 1;
+				listNum += "a";
+			}else{
+				if(numGate != 0 && typerArray.includes(user) == true){
+					let userStatus = "Is typing...";
+					UpdateUsersSamNotTyping(user , listNum , userBar , userStatus);
+					listNum += "a";
+				}else{
+					let userStatus = "Online";
+					UpdateUsersSamNotTyping(user , listNum , userBar , userStatus);
+					listNum += "a";
+				}
+			}
+		}		
+	}
+}})};
+
+function fetchUsers() {
+    fetch(baseUrl+'/chat/users', {
+        method: 'get'
+    })
+    .then(response => response.json())
+    .then(data => updateUsersSam(data))
+    .catch(error => {
+        console.log("Error fetching user list:", error);
+    });
+}
+// Call fetchUsers every 5 seconds to update the user list
+
+function fetchTypers() {
+    fetch(baseUrl+'/chat/users/typing', {
+        method: 'get'
+    })
+    .then(response => response.json())
+    .then(data => makeTyperArray(data))
+    .catch(error => {
+        console.log("No users are typing so there is no JSON object to fetch", error);
+		typerArray = null;
+    });
+}
+
+var typerArray = "";
+function makeTyperArray(data){
+	console.log(data);
+	const users = data['typerList'];
+	//Returning list like Grant,Sammy,Joe,etc. and then turning it into a javascript array.
+	//https://dev.to/sanchithasr/6-ways-to-convert-a-string-to-an-array-in-javascript-1cjg
+	typerArray = users.split(',');
+}
+
+
