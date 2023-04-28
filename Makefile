@@ -5,28 +5,18 @@
 
 # Makefile for Flask web application
 
-# Variables
-PYTHON=python3
-PIP=pip3
-HTML_DIR=/var/www/html/lab2/
-CSS_DIR=/var/www/html/lab2/
-JS_DIR=/var/www/html/lab2/
+CXX = g++
+CXXFLAGS = -std=c++11
 
-# Targets
-install:
-	$(PIP) install -r requirements.txt
+all: register
 
-run:
-	$(PYTHON) app.py
-
-lint:
-	pylint app.py
+register: register.cpp
+$(CXX) $(CXXFLAGS) -o register register.cpp
 
 clean:
-	$(RM) __pycache__/
-	$(RM) */__pycache__/
-	$(RM) *.pyc
-	$(RM) */*.pyc
+	rm -f register
+
+
 
 deploy:
 	cp restChat.html $(HTML_DIR)
