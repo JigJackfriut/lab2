@@ -1,4 +1,4 @@
-var baseUrl = 'http://18.116.8.156:5005';
+var baseUrl = 'http://54.198.38.17:5005';
 var state="off";
 var myname="";
 var inthandle;
