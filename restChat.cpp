@@ -13,7 +13,6 @@ struct User {
     bool loggedIn;
 };
 
-// Function to read user data from a file
 vector<User> readUsers(string filename) {
     vector<User> users;
     ifstream inputFile(filename);
@@ -28,7 +27,6 @@ vector<User> readUsers(string filename) {
     return users;
 }
 
-// Function to write user data to a file
 void writeUsers(vector<User> users, string filename) {
     ofstream outputFile(filename);
     if (outputFile.is_open()) {
@@ -38,6 +36,7 @@ void writeUsers(vector<User> users, string filename) {
         outputFile.close();
     }
 }
+
 
 // Function to check if a username exists in the user list
 bool usernameExists(vector<User> users, string username) {
@@ -60,9 +59,9 @@ bool authenticateUser(vector<User>& users, string username, string password) {
     return false;
 }
 
-// Handle POST request for user registration
 void handleRegistration(const Request& req, Response& res) {
-    vector<User> users = readUsers("users.txt");
+    string filename = "users.txt";
+    vector<User> users = readUsers(filename);
     string username = req.get_param_value("username");
     string password = req.get_param_value("password");
     if (usernameExists(users, username)) {
@@ -70,14 +69,14 @@ void handleRegistration(const Request& req, Response& res) {
     } else {
         User newUser = {username, password, false};
         users.push_back(newUser);
-        writeUsers(users, "users.txt");
+        writeUsers(users, filename);
         res.set_content("Registration successful!", "text/plain");
     }
 }
 
-// Handle POST request for user login
 void handleLogin(const Request& req, Response& res) {
-    vector<User> users = readUsers("users.txt");
+    string filename = "users.txt";
+    vector<User> users = readUsers(filename);
     string username = req.get_param_value("username");
     string password = req.get_param_value("password");
     if (authenticateUser(users, username, password)) {
@@ -87,9 +86,9 @@ void handleLogin(const Request& req, Response& res) {
     }
 }
 
-// Handle GET request for logged in users
 void handleLoggedInUsers(const Request& req, Response& res) {
-    vector<User> users = readUsers("users.txt");
+    string filename = "users.txt";
+    vector<User> users = readUsers(filename);
     string output = "Logged in users:\n";
     for (User user : users) {
         if (user.loggedIn) {
