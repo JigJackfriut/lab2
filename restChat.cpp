@@ -100,13 +100,6 @@ void handleLoggedInUsers(const Request& req, Response& res) {
 
 int main() {
     
-    std::ofstream outfile("users.txt", std::ios_base::app);
-  if (!outfile) {
-    std::cout << "Error: Could not open file" << std::endl;
-      std::cout << "<script>document.getElementById('error-message').textContent = 'Error opening file.'</script>";
-    return 1;
-  }
-    
     Server svr;
 
     // Serve HTML and JavaScript files
