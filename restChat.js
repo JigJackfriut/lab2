@@ -50,8 +50,9 @@ $(document).ready(function() {
 
 
 success: function(response) {
-  $('#status').text('Login successful.');
-});
+  // Display response from server
+  $("#status").html(response);
+}
 
 setInterval(function() {
   $.ajax({
