@@ -106,16 +106,48 @@ int main() {
     svr.set_file_extension_and_mimetype_mapping("html", "text/html");
     svr.set_file_extension_and_mimetype_mapping("js", "application/javascript");
 
+    // Initialize user vector
+    vector<User> users = readUsers("users.txt");
+
     // Register HTTP request handlers
-    svr.Post("/register", handleRegistration);
-    svr.Post("/login", handleLogin);
-   
-    svr.Get("/logged-in-users", handleLoggedInUsers);
+    svr.Post("/register", [&](const Request& req, Response& res) {
+        string username = req.get_param_value("username");
+        string password = req.get_param_value("password");
+        if (usernameExists(users, username)) {
+            res.set_content("Username already exists.", "text/plain");
+        } else {
+            User newUser = {username, password, false};
+            users.push_back(newUser);
+            writeUsers(users, "users.txt");
+            res.set_content("Registration successful!", "text/plain");
+        }
+    });
+
+    svr.Post("/login", [&](const Request& req, Response& res) {
+        string username = req.get_param_value("username");
+        string password = req.get_param_value("password");
+        if (authenticateUser(users, username, password)) {
+            res.set_content("Login successful!", "text/plain");
+        } else {
+            res.set_content("Invalid username or password.", "text/plain");
+        }
+    });
+
+    svr.Get("/logged-in-users", [&](const Request& req, Response& res) {
+        string output = "Logged in users:\n";
+        for (User user : users) {
+            if (user.loggedIn) {
+                output += user.username + "\n";
+            }
+        }
+        res.set_content(output, "text/plain");
+    });
 
     // Start server on http://54.198.38.17:5005/
     svr.listen("54.198.38.17", 5005);
 
     return 0;
 }
+
 
 
