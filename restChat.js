@@ -61,6 +61,8 @@ function register() {
     .then(response => {
       if (response.ok) {
         appendMessage("Registration successful!");
+        loginForm.style.display = "block";
+        registerForm.style.display = "none";
       } else {
         appendMessage("Registration failed: " + response.statusText);
       }
@@ -110,5 +112,6 @@ setInterval(() => {
     .then(data => {
       messageContainer.innerHTML = data;
     })
-    .catch(error => console.error("Error fetching chat messages:", error));
-}, 
+
+
+  
