@@ -1,5 +1,4 @@
 #include <iostream>
-#include <string>
 #include <vector>
 #include "httplib.h"
 
@@ -39,6 +38,7 @@ void handleRegistration(const Request& req, Response& res) {
     string username = req.get_param_value("username");
     string password = req.get_param_value("password");
     if (usernameExists(username)) {
+        res.status = 400; // Bad Request
         res.set_content("Username already exists.", "text/plain");
     } else {
         User newUser = {username, password, false};
@@ -53,6 +53,7 @@ void handleLogin(const Request& req, Response& res) {
     if (authenticateUser(username, password)) {
         res.set_content("Login successful!", "text/plain");
     } else {
+        res.status = 401; // Unauthorized
         res.set_content("Invalid username or password.", "text/plain");
     }
 }
@@ -68,25 +69,17 @@ void handleLoggedInUsers(const Request& req, Response& res) {
 }
 
 int main() {
-    
     Server svr;
 
-    // Serve HTML and JavaScript files
-    svr.set_mount_point("/", "./");
-    
-
-    svr.set_file_extension_and_mimetype_mapping("html", "text/html");
-    svr.set_file_extension_and_mimetype_mapping("js", "application/javascript");
+    // Serve the static files
+    svr.set_mount_point("/", "./public");
 
     // Register HTTP request handlers
     svr.Post("/register", handleRegistration);
     svr.Post("/login", handleLogin);
     svr.Get("/logged-in-users", handleLoggedInUsers);
 
-    
-   svr.listen("0.0.0.0", 5005);
-
-
+    // Start the server
+    svr.listen("0.0.0.0", 5005);
     return 0;
 }
-
