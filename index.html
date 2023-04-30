@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>REST Chat</title>
+	<link rel="stylesheet" href="style.css">
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script src="restChat.js"></script>
+</head>
+<body>
+	<div id="message-container"></div>
+
+	<div id="login-form">
+		<h2>Login</h2>
+		<form id="login-form" action="">
+			<label for="username-input">Username:</label>
+			<input type="text" id="username-input" name="username" required>
+			<label for="password-input">Password:</label>
+			<input type="password" id="password-input" name="password" required>
+			<input type="submit" id="login-button" value="Login">
+		</form>
+		<p>Don't have an account? <a href="#" id="register-btn">Register</a></p>
+	</div>
+
+	<div id="register-form">
+		<h2>Register</h2>
+		<form id="register-form" action="">
+			<label for="username-input">Username:</label>
+			<input type="text" id="username-input" name="username" required>
+			<label for="password-input">Password:</label>
+			<input type="password" id="password-input" name="password" required>
+			<input type="submit" id="register-button" value="Register">
+		</form>
+		<p>Already have an account? <a href="#" id="login-btn">Login</a></p>
+	</div>
+
+	<div id="chat-form">
+		<h2>Chat</h2>
+		<form id="chat-form" action="">
+			<label for="message-input">Message:</label>
+			<input type="text" id="message-input" name="message" required>
+			<input type="submit" id="send-button" value="Send">
+		</form>
+		<p>Logged in as <span id="username"></span>. <a href="#" id="logout-btn">Logout</a></p>
+		<p>Currently logged in users:</p>
+		<ul id="logged-in-users"></ul>
+	</div>
+</body>
+</html>
