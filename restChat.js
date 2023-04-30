@@ -49,3 +49,6 @@ $(document).ready(function() {
 });
 
 
+success: function(response) {
+  $('#status').text('Login successful.');
+});
