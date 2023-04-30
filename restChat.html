@@ -1,98 +1,110 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Login and Register</title>
-  </head>
-  <body>
-    <h1>Login and Register</h1>
-    <form id="register-form">
-      <h2>Register</h2>
-      <div>
-        <label for="reg-username">Username:</label>
-        <input type="text" id="reg-username" name="username">
-      </div>
-      <div>
-        <label for="reg-password">Password:</label>
-        <input type="password" id="reg-password" name="password">
-      </div>
-      <button type="submit">Register</button>
-    </form>
-    <form id="login-form">
-      <h2>Login</h2>
-      <div>
-        <label for="login-username">Username:</label>
-        <input type="text" id="login-username" name="username">
-      </div>
-      <div>
-        <label for="login-password">Password:</label>
-        <input type="password" id="login-password" name="password">
-      </div>
-      <button type="submit">Login</button>
-    </form>
-    <div id="status"></div>
-    <h2>Logged in users:</h2>
-    <ul id="logged-in-users"></ul>
-    <script src="restChat.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script>
-      $(function() {
-        // Handle registration form submission
-        $('#register-form').submit(function(event) {
-          event.preventDefault();
-          var username = $('#reg-username').val();
-          var password = $('#reg-password').val();
-          $.ajax({
-            url: 'http://54.198.38.17:5005/register',
-            type: 'POST',
-            data: {
-              username: username,
-              password: password
-            },
-            success: function(response) {
-              $('#status').text('Registration successful.');
-            },
-            error: function(xhr) {
-              $('#status').text('Registration failed: ' + xhr.responseText);
-            }
-          });
-        });
+<head>
+	<title>REST Chat</title>
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script src="restChat.js"></script>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+		}
 
-        // Handle login form submission
-        $('#login-form').submit(function(event) {
-          event.preventDefault();
-          var username = $('#login-username').val();
-          var password = $('#login-password').val();
-          $.ajax({
-            url: 'http://54.198.38.17:5005/login',
-            type: 'POST',
-            data: {
-              username: username,
-              password: password
-            },
-            success: function(response) {
-              $('#status').text('Login successful.');
-            },
-            error: function(xhr) {
-              $('#status').text('Login failed: ' + xhr.responseText);
-            }
-          });
-        });
+		#login-form, #register-form {
+			display: none;
+		}
 
-        // Update logged-in users list periodically
-        setInterval(function() {
-          $.ajax({
-            url: 'http://54.198.38.17:5005/logged-in-users',
-            type: 'GET',
-            success: function(users) {
-              $('#logged-in-users').empty();
-              for (var i = 0; i < users.length; i++) {
-                $('#logged-in-users').append($('<li>').text(users[i]));
-              }
-            }
-          });
-        }, 1000);
-      });
+		#logout-btn {
+			display: none;
+		}
 
-    </script>
+		#logged-in-users {
+			display: none;
+		}
+
+		#messages-container {
+			height: 400px;
+			overflow-y: scroll;
+			border: 1px solid black;
+			padding: 10px;
+		}
+
+		#message-input {
+			width: 80%;
+			padding: 5px;
+			margin-right: 10px;
+		}
+
+		#send-btn {
+			width: 15%;
+			padding: 5px;
+			background-color: #4CAF50;
+			color: white;
+			border: none;
+			border-radius: 4px;
+			cursor: pointer;
+		}
+
+		#error-message {
+			color: red;
+		}
+
+		.success {
+			color: green;
+		}
+	</style>
+</head>
+<body>
+	<h1>REST Chat</h1>
+
+	<div id="login-form">
+		<h2>Login</h2>
+		<div id="login-form-error" class="error-message"></div>
+		<form>
+			<label for="login-username">Username:</label>
+			<input type="text" id="login-username" name="username"><br><br>
+
+			<label for="login-password">Password:</label>
+			<input type="password" id="login-password" name="password"><br><br>
+
+			<input type="submit" value="Login">
+		</form>
+		<br>
+		<button id="register-btn">Register</button>
+	</div>
+
+	<div id="register-form">
+		<h2>Register</h2>
+		<div id="register-form-error" class="error-message"></div>
+		<form>
+			<label for="register-username">Username:</label>
+			<input type="text" id="register-username" name="username"><br><br>
+
+			<label for="register-password">Password:</label>
+			<input type="password" id="register-password" name="password"><br><br>
+
+			<input type="submit" value="Register">
+		</form>
+		<br>
+		<button id="login-btn">Login</button>
+	</div>
+
+	<div id="chat-container">
+		<div id="logout-btn-container">
+			<button id="logout-btn">Logout</button>
+		</div>
+		<h2>Chat Room</h2>
+		<div id="messages-container"></div>
+		<br>
+		<form>
+			<input type="text" id="message-input">
+			<button id="send-btn">Send</button>
+		</form>
+	</div>
+
+	<div id="logged-in-users">
+		<h2>Logged in Users</h2>
+		<div id="logged-in-users-list"></div>
+	</div>
+    
   </body>
 </html>
