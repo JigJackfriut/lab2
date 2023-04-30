@@ -52,3 +52,17 @@ $(document).ready(function() {
 success: function(response) {
   $('#status').text('Login successful.');
 });
+
+setInterval(function() {
+  $.ajax({
+    url: 'http://54.198.38.17:5005/logged-in-users',
+    type: 'GET',
+    success: function(users) {
+      $('#logged-in-users').empty();
+      for (var i = 0; i < users.length; i++) {
+        $('#logged-in-users').append($('<li>').text(users[i]));
+      }
+    }
+  });
+}, 1000);
+
