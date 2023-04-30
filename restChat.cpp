@@ -1,85 +1,93 @@
 #include <iostream>
-#include <vector>
-#include "httplib.h"
+#include <string>
+#include <curl/curl.h>
 
-using namespace std;
-using namespace httplib;
-
-struct User {
-    string username;
-    string password;
-    bool loggedIn;
-};
-
-vector<User> users;
-
-// Function to check if a username exists in the user list
-bool usernameExists(string username) {
-    for (User user : users) {
-        if (user.username == username) {
-            return true;
-        }
-    }
-    return false;
-}
-
-// Function to check if a username and password match a user in the user list
-bool authenticateUser(string username, string password) {
-    for (User& user : users) { // Use reference to modify login status
-        if (user.username == username && user.password == password) {
-            user.loggedIn = true;
-            return true;
-        }
-    }
-    return false;
-}
-
-void handleRegistration(const Request& req, Response& res) {
-    string username = req.get_param_value("username");
-    string password = req.get_param_value("password");
-    if (usernameExists(username)) {
-        res.status = 400; // Bad Request
-        res.set_content("Username already exists.", "text/plain");
-    } else {
-        User newUser = {username, password, false};
-        users.push_back(newUser);
-        res.set_content("Registration successful!", "text/plain");
-    }
-}
-
-void handleLogin(const Request& req, Response& res) {
-    string username = req.get_param_value("username");
-    string password = req.get_param_value("password");
-    if (authenticateUser(username, password)) {
-        res.set_content("Login successful!", "text/plain");
-    } else {
-        res.status = 401; // Unauthorized
-        res.set_content("Invalid username or password.", "text/plain");
-    }
-}
-
-void handleLoggedInUsers(const Request& req, Response& res) {
-    string output = "Logged in users:\n";
-    for (User user : users) {
-        if (user.loggedIn) {
-            output += user.username + "\n";
-        }
-    }
-    res.set_content(output, "text/plain");
-}
+std::string BASE_URL = "http://54.198.38.17:5005/";
 
 int main() {
-    Server svr;
+  // Initialize curl
+  curl_global_init(CURL_GLOBAL_DEFAULT);
 
-    // Serve the static files
-    svr.set_mount_point("/", "./public");
+  // Login
+  CURL *curl = curl_easy_init();
+  if (curl) {
+    std::string url = BASE_URL + "login";
+    std::string body = "{\"username\": \"user\", \"password\": \"pass\"}";
 
-    // Register HTTP request handlers
-    svr.Post("/register", handleRegistration);
-    svr.Post("/login", handleLogin);
-    svr.Get("/logged-in-users", handleLoggedInUsers);
+    // Set curl options
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.c_str());
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE_LARGE, (curl_off_t) body.size());
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, "Content-Type: application/json");
 
-    // Start the server
-    svr.listen("0.0.0.0", 5005);
-    return 0;
+    // Send request
+    CURLcode res = curl_easy_perform(curl);
+    if (res != CURLE_OK) {
+      std::cerr << "Failed to send login request: " << curl_easy_strerror(res) << std::endl;
+    } else {
+      std::cout << "Login successful!" << std::endl;
+    }
+
+    // Cleanup curl
+    curl_easy_cleanup(curl);
+  } else {
+    std::cerr << "Failed to initialize curl." << std::endl;
+  }
+
+  // Register
+  curl = curl_easy_init();
+  if (curl) {
+    std::string url = BASE_URL + "register";
+    std::string body = "{\"username\": \"user\", \"password\": \"pass\"}";
+
+    // Set curl options
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.c_str());
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE_LARGE, (curl_off_t) body.size());
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, "Content-Type: application/json");
+
+    // Send request
+    CURLcode res = curl_easy_perform(curl);
+    if (res != CURLE_OK) {
+      std::cerr << "Failed to send registration request: " << curl_easy_strerror(res) << std::endl;
+    } else {
+      std::cout << "Registration successful!" << std::endl;
+    }
+
+    // Cleanup curl
+    curl_easy_cleanup(curl);
+  } else {
+    std::cerr << "Failed to initialize curl." << std::endl;
+  }
+
+  // Chat
+  curl = curl_easy_init();
+  if (curl) {
+    std::string url = BASE_URL + "chat";
+    std::string body = "{\"message\": \"Hello, world!\"}";
+
+    // Set curl options
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.c_str());
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE_LARGE, (curl_off_t) body.size());
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, "Content-Type: application/json");
+
+    // Send request
+    CURLcode res = curl_easy_perform(curl);
+    if (res != CURLE_OK) {
+      std::cerr << "Failed to send chat request: " << curl_easy_strerror(res) << std::endl;
+    } else {
+      std::cout << "Chat message sent." << std::endl;
+    }
+
+    // Cleanup curl
+    curl_easy_cleanup(curl);
+  } else {
+    std::cerr << "Failed to initialize curl." << std::endl;
+  }
+
+  // Cleanup curl
+  curl_global_cleanup();
+
+  return 0;
 }
