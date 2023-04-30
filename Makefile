@@ -1,16 +1,15 @@
-CXX = g++
-CXXFLAGS = -std=c++11
+all: PutHTML restChat
 
-register: register.cpp
-	$(CXX) $(CXXFLAGS) -o register register.cpp
+PutHTML:
+	cp restChat.html /var/www/html/restChat/
+	cp restChat.css /var/www/html/restChat/
+	cp restChat.js /var/www/html/restChat/
+	
+	echo "Current contents of your HTML directory: "
+	ls -l /var/www/html/restChat/
 
-deploy:
-	cp restChat.html $(HTML_DIR)/restChat.html
-	cp restChat.css $(CSS_DIR)/restChat.css
-	cp restChat.js $(JS_DIR)/restChat.js
-
-.PHONY: clean deploy
+restChat : restChat.cpp httplib.h
+	$(CXX) -o restChat $(CXXFLAGS) restChat.cpp $(OPENSSL_SUPPORT) $(ZLIB_SUPPORT) $(BROTLI_SUPPORT) 
 
 clean:
-	rm -f register
-
+	rm restChat *.o
