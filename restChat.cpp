@@ -73,7 +73,7 @@ int main() {
 
     // Serve HTML and JavaScript files
     svr.set_mount_point("/", "./");
-    svr.set_mount_point("/", "./restChat.html");
+    
 
     svr.set_file_extension_and_mimetype_mapping("html", "text/html");
     svr.set_file_extension_and_mimetype_mapping("js", "application/javascript");
@@ -84,7 +84,7 @@ int main() {
     svr.Get("/logged-in-users", handleLoggedInUsers);
 
     
-   svr.listen("54.198.38.17", 5005);
+   svr.listen("0.0.0.0", 5005);
 
 
     return 0;
