@@ -51,7 +51,7 @@ $(document).ready(function() {
 
 success: function(response) {
   // Display response from server
-  $("#status").html(response);
+$('#status').text('successful');
 }
 
 setInterval(function() {
