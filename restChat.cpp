@@ -1,289 +1,122 @@
-//
-//  namesAPI.cc - a microservice demo program
-//
-// James Skon
-// Kenyon College, 2022
-//
 #include <iostream>
 #include <fstream>
-#include <map>
-#include <algorithm>
 #include <string>
-#include "httplib.h"
 #include <vector>
+#include "httplib.h"
 
-using namespace httplib;
 using namespace std;
+using namespace httplib;
 
-const int port = 5005;
+struct User {
+    string username;
+    string password;
+    bool loggedIn;
+};
 
-void addMessage(string username, string message, map<string,vector<string>> &messageMap) {
-	/* iterate through users adding message to each */
-	string jsonMessage = "{\"user\":\""+username+"\",\"message\":\""+message+"\"}";
-	for (auto userMessagePair : messageMap) {
-		username = userMessagePair.first;
-		messageMap[username].push_back(jsonMessage);
-	}
-}
-
-string getMessagesJSON(string username, map<string,vector<string>> &messageMap) {
-	/* retrieve json list of messages for this user */
-	bool first = true;
-	string result = "{\"messages\":[";
-	for (string message :  messageMap[username]) {
-		if (not first) result += ",";
-		result += message;
-		first = false;
-	}
-	result += "]}";
-	messageMap[username].clear();
-	return result;
-}
-
-
-
-//Grab List of Usernames
-string getUserList(map<string, string> const &activeUsers){
-	string usernameList = "Users: ";
-    for (auto const &pair: activeUsers) {
-		usernameList += pair.first;
-		usernameList += ", ";
+// Function to read user data from a file
+vector<User> readUsers(string filename) {
+    vector<User> users;
+    ifstream inputFile(filename);
+    if (inputFile.is_open()) {
+        string username, password;
+        while (inputFile >> username >> password) {
+            User user = {username, password, false};
+            users.push_back(user);
+        }
+        inputFile.close();
     }
-	usernameList.erase(usernameList.length() - 2);
-	string jsonMessage = "{\"userList\":\""+usernameList+"\"}";
-	return jsonMessage;
+    return users;
 }
 
-string getUserListMod(map<string, string> const &activeUsers){
-	string usernameList;
-    for (auto const &pair: activeUsers) {
-		usernameList += pair.first;
-		usernameList += ",";
+// Function to write user data to a file
+void writeUsers(vector<User> users, string filename) {
+    ofstream outputFile(filename);
+    if (outputFile.is_open()) {
+        for (User user : users) {
+            outputFile << user.username << " " << user.password << endl;
+        }
+        outputFile.close();
     }
-	usernameList.erase(usernameList.length() - 1);
-	string jsonMessage = "{\"userList\":\""+usernameList+"\"}";
-	return jsonMessage;
 }
 
-
-//Remove someone from the active users list
-void removeUser(map<string, string> &activeUsers , string username){
-	activeUsers.erase(username);
+// Function to check if a username exists in the user list
+bool usernameExists(vector<User> users, string username) {
+    for (User user : users) {
+        if (user.username == username) {
+            return true;
+        }
+    }
+    return false;
 }
 
-
-
-
-
-
-
-
-//This function will add a user to a userMap, with their username, email, and password in a json string.
-void addUser(string username, string password, string email, map<string,string> &userMap) {
-	/* iterate through users adding message to each */
-	string jsonMessage = "{\"user\":\""+username+"\",\"pass\":\""+password+"\",\"email\":\""+email+"\"}";
-	userMap[username] = jsonMessage;
-	cout << "addUser output: "<< userMap[username] << endl;
+// Function to check if a username and password match a user in the user list
+bool authenticateUser(vector<User>& users, string username, string password) {
+    for (User& user : users) { // Use reference to modify login status
+        if (user.username == username && user.password == password) {
+            user.loggedIn = true;
+            return true;
+        }
+    }
+    return false;
 }
 
-//Add someone to the active typers map
-void addTyper(string username, map<string,string> &typingMap , map<string,string> &isTypingMap){
-	string response = "yes";
-	string message = "...";
-	isTypingMap[username] = ".";
-	typingMap[username] = "{\"user\":\""+username+"\",\"typing\":\""+response+"\"}";
-}
-
-//Remove someone from the active typer map.
-void removeTyper(string username, map<string,string> &typingMap , map<string,string> &isTypingMap){
-	string message = "";
-	typingMap.erase(username);
-	isTypingMap[username] = "{\"user\":\""+username+"\",\"message\":\""+message+"\"}";
-}
-
-
-
-string getMessagesJSON(string username, map<string,vector<string>> &messageMap) {
-	/* retrieve json list of messages for this user */
-	bool first = true;
-	string result = "{\"messages\":[";
-	for (string message :  messageMap[username]) {
-		if (not first) result += ",";
-		result += message;
-		first = false;
-	}
-	result += "]}";
-	messageMap[username].clear();
-	return result;
-}
-
-
-int main(void) {
-  Server svr;
-  int nextUser=0;
-  map<string,vector<string>> messageMap;
-  map<string,vector<string>> typingUsersMap;
-  map<string,vector<string>> holdList;
-  map<string,string> userMap;
-  map<string,string> userEmail;
-  map<string,string> activeUsers;
-  map<string,string> typingMap;
-  map<string,string> isTypingMap;
-
-	
-  /* "/" just returnsAPI name */
-  //This is the API home page
-  svr.Get("/", [](const Request & /*req*/, Response &res) {
-    res.set_header("Access-Control-Allow-Origin","*");
-    res.set_content("Chat API", "text/plain");
-  });
-
-  //This is a test page
-  svr.Get("/secretpage", [](const Request & /*req*/, Response &res) {
-    res.set_header("Access-Control-Allow-Origin","*");
-    res.set_content("You found the secret page 0_0", "text/plain");
-  });
-  
-  //REGISTRATION: This Section should handle someone registering, /chat/register/username/email/password
-  svr.Get(R"(/chat/register/(.*)/(.*)/(.*))", [&](const Request& req, Response& res) {
-	res.set_header("Access-Control-Allow-Origin","*");
-    string username = req.matches[1];
-	string email = req.matches[2];
-	string password = req.matches[3];
-    string result;
-    vector<string> empty;
-    // Check if user with this name or email already exists, or if password is less than 6 characters.
-    if (messageMap.count(username) or messageMap.count(email) or password.length() < 7){
-    	result = "{\"status\":\"registrationfailure\"}";
+// Handle POST request for user registration
+void handleRegistration(const Request& req, Response& res) {
+    vector<User> users = readUsers("users.txt");
+    string username = req.get_param_value("username");
+    string password = req.get_param_value("password");
+    if (usernameExists(users, username)) {
+        res.set_content("Username already exists.", "text/plain");
     } else {
-    	// Add users to various maps
-    	messageMap[username]= empty;
-		userEmail[username] = email;
-		addUser(username , password, email , userMap);
-    	result = "{\"status\":\"success\",\"user\":\"" + username + "\",\"email\":\"" + email + "\",\"pass\":\"" + password + "\"}";
-		//Output some stuff
-		cout << username << " registered" << endl;
-		cout << "User Email: " << userEmail[username] << endl;
-
+        User newUser = {username, password, false};
+        users.push_back(newUser);
+        writeUsers(users, "users.txt");
+        res.set_content("Registration successful!", "text/plain");
     }
-    res.set_content(result, "text/json");
-  });
-  
-  //This Section is the part of the API for logging in.
-  svr.Get(R"(/chat/join/(.*)/(.*))", [&](const Request& req, Response& res) {
-    res.set_header("Access-Control-Allow-Origin","*");
-	//cout<< "this is log in output" << endl;
-    string username = req.matches[1];
-	string password = req.matches[2];
-	string email = userEmail[username];
-	string combined = "{\"user\":\""+username+"\",\"pass\":\""+password+"\",\"email\":\""+email+"\"}";
-	//cout<< combined << endl;
-	//cout<< testAgainst << endl;
-    string result;
-    // Check if user with this name and password exists
-    if (combined == userMap[username]){
-    	result = "{\"status\":\"success\",\"user\":\"" + username + "\"}";
-		activeUsers[username] = "this user is active";
-		cout << username << " joins" << endl;
-    } else {
-    	result = "{\"status\":\"failure\"}";
-    }
-    res.set_content(result, "text/json");
-	getUserList(userMap);
-  });
-
-  //This is the part of the API that handles sending messages.
-   svr.Get(R"(/chat/send/(.*)/(.*))", [&](const Request& req, Response& res) {
-    res.set_header("Access-Control-Allow-Origin","*");
-	string username = req.matches[1];
-	string message = req.matches[2];
-	string result; 
-    if (!messageMap.count(username)) {
-    	result = "{\"status\":\"baduser\"}";
-	} else {
-		addMessage(username,message,messageMap);
-		result = "{\"status\":\"success\"}";
-	}
-    res.set_content(result, "text/json");
-  });
-  
- 
-  //This part of the code grabs messages that are sent
-   svr.Get(R"(/chat/fetch/(.*))", [&](const Request& req, Response& res) {
-    string username = req.matches[1];
-    res.set_header("Access-Control-Allow-Origin","*");
-    string resultJSON = getMessagesJSON(username,messageMap);
-    res.set_content(resultJSON, "text/json");
-  });
-  
-    //This part of the code grabs a list of users
-   svr.Get(R"(/chat/userlist)", [&](const Request& req, Response& res) {
-    res.set_header("Access-Control-Allow-Origin","*");
-	string result;
-	result = getUserList(activeUsers);
-	res.set_content(result, "text/json");
-  });
-  
-   //This part of the code will remove a user from the active user list.
-   svr.Get(R"(/chat/userlist/remove/(.*))", [&](const Request& req, Response& res) {
-    res.set_header("Access-Control-Allow-Origin","*");
-	string username = req.matches[1];
-	removeUser(activeUsers , username);
-  });
-  
-  //This part of the code will update whether someone is typing.
-     svr.Get(R"(/chat/typing/update/(.*))", [&](const Request& req, Response& res) {
-    res.set_header("Access-Control-Allow-Origin","*");
-	string username = req.matches[1];
-	addTyper(username , typingMap , isTypingMap);
-  });
-  
-   //This part of the code will remove someone from the typing map who is not typing.
-     svr.Get(R"(/chat/typing/remove/(.*))", [&](const Request& req, Response& res) {
-    res.set_header("Access-Control-Allow-Origin","*");
-	string username = req.matches[1];
-	removeTyper(username , typingMap , isTypingMap);
-  });
- 
-    //This part of the code will return JSON of whether someone is typing
-     svr.Get(R"(/chat/typing/(.*))", [&](const Request& req, Response& res) {
-    res.set_header("Access-Control-Allow-Origin","*");
-	string username = req.matches[1];
-	string result = typingMap[username];
-	res.set_content(result, "text/json");
-  });
-  
-    //This part of the code will send ... for someone typing
-    svr.Get(R"(/chat/typingmessage/(.*))", [&](const Request& req, Response& res) {
-    res.set_header("Access-Control-Allow-Origin","*");
-	string username = req.matches[1];
-	string result = isTypingMap[username];
-	showTyping(username , messageMap , typingMap , isTypingMap);
-	res.set_content(result, "text/json");
-  });
-  
-      //This part of the code will update the user list for the thing at the bottom of the web page
-    svr.Get(R"(/chat/users)", [&](const Request& req, Response& res) {
-    res.set_header("Access-Control-Allow-Origin","*");
-	string result;
-	result = getUserListMod(activeUsers);
-	res.set_content(result, "text/json");
-  });
-  
-    //This part of the code will update the user list for the thing at the bottom of the web page
-    svr.Get(R"(/chat/users/typing)", [&](const Request& req, Response& res) {
-    res.set_header("Access-Control-Allow-Origin","*");
-	string result;
-	result = getTypersListMod(typingMap);
-	res.set_content(result, "text/json");
-  });
-  
-
-  
-  //What comes out in the Linux Console:
-  cout << "Server listening on port " << port << endl;
-  cout << "Chat Time" << endl;
-  svr.listen("0.0.0.0", port);
-
 }
+
+// Handle POST request for user login
+void handleLogin(const Request& req, Response& res) {
+    vector<User> users = readUsers("users.txt");
+    string username = req.get_param_value("username");
+    string password = req.get_param_value("password");
+    if (authenticateUser(users, username, password)) {
+        res.set_content("Login successful!", "text/plain");
+    } else {
+        res.set_content("Invalid username or password.", "text/plain");
+    }
+}
+
+// Handle GET request for logged in users
+void handleLoggedInUsers(const Request& req, Response& res) {
+    vector<User> users = readUsers("users.txt");
+    string output = "Logged in users:\n";
+    for (User user : users) {
+        if (user.loggedIn) {
+            output += user.username + "\n";
+        }
+    }
+    res.set_content(output, "text/plain");
+}
+
+int main() {
+    Server svr;
+
+    // Serve HTML and JavaScript files
+    svr.set_mount_point("/", "./");
+    svr.set_file_extension_and_mimetype_mapping("html", "text/html");
+    svr.set_file_extension_and_mimetype_mapping("js", "application/javascript");
+
+    // Register HTTP request handlers
+    svr.Post("/register", handleRegistration);
+    svr.Post("/login", handleLogin);
+   
+    svr.Get("/logged-in-users", handleLoggedInUsers);
+
+    // Start server on http://54.198.38.17:5005/
+    svr.listen("54.198.38.17", 5005);
+
+    return 0;
+}
+
 
